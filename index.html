@@ -1,58 +1,87 @@
-<!DOCTYPE html>
-<html lang="de">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PixelSecure</title>
-    <link rel="stylesheet" href="style.css">
-</head>
-<body>
-    <header>
-        <img src="Logo.png" alt="PixelSecure Logo" width="100">
-        <h1>PixelSecure</h1>
-        <p>Dein Weg zu Privatsphäre und Sicherheit – Modern. Sicher. Individuell.</p>
-    </header>
+document.addEventListener('DOMContentLoaded', function () {
+    const phoneRadios = document.querySelectorAll('input[name="phone"]');
+    const phoneQuantities = document.querySelectorAll('input[name="phone-qty"]');
+    const modCheckboxes = document.querySelectorAll('input[name="mod"]');
+    const simCheckboxes = document.querySelectorAll('input[name="sim"]');
+    const simQuantities = document.querySelectorAll('input[name="sim-qty"]');
+    const totalElement = document.getElementById('total');
+    const cartElement = document.getElementById('cart');
 
-    <section>
-        <h2>Smartphones</h2>
-        <label><input type="checkbox" name="phone" value="399" data-name="Google Pixel 6a GOS"> Google Pixel 6a GOS – 399 €</label><br>
-        <label><input type="checkbox" name="phone" value="549" data-name="Google Pixel 7 GOS">
-        Google Pixel 7 GOS – 700€</label><br>
-        <label><input type="checkbox" name="phone" value="699" data-name="Google Pixel 8 GOS">
-        Google Pixel 8 GOS – 899€</label><br>
-        <label><input type="checkbox" name="phone" value="849" data-name="Google Pixel 9 GOS">
-        Google Pixel 9 GOS – 999€</label><br>
-    </section>
+    let total = 0;
+    let cartItems = [];
 
-    <section>
-      <h2>Umbauten</h2>
-        <label><input type="checkbox" name="mod" value="50" data-name="Sensoren deaktivieren">
-         Sensoren entfernen– 50 €</label><br>
-        <label><input type="checkbox" name="mod" value="75" data-name="Mikrofon entfernen"> Mikrofon entfernen – 75 €</label><br>
-        <label><input type="checkbox" name="mod" value="50" data-name="Frontkamera deaktivieren"> Frontkamera deaktivieren – 50 €</label><br>
-        <label><input type="checkbox" name="mod" value="50" data-name="Rückkamera entfernen"> Rückkamera entfernen – 50 €</label><br>
-        <label><input type="checkbox" name="mod" value="175" data-name="Komplett-Umbau-Paket"> Komplett-Umbau-Paket – 175 €</label><br>
-    </section>
+    // Funktion zur Aktualisierung des Warenkorbs
+    function updateCart() {
+        total = 0;
+        cartItems = [];
 
-<section>
-      <h2>SIM-Karten</h2>
-        <label><input type="checkbox" name="sim" value="25" data-name="Ayildiz SIM">
-         Ayildiz SIM – 25 € (physisch)</label>
-        <br>
-        <label><input type="checkbox" name="sim" value="35" data-name="Silent.link SIM">
-         &nbsp;E-SIM – 35 €</label>
-        <br>
-    </section>
+        // Handy auswählen
+        const selectedPhone = document.querySelector('input[name="phone"]:checked');
+        if (selectedPhone) {
+            const phoneQty = selectedPhone.closest('.phone-option').querySelector('input[name="phone-qty"]').value;
+            const phonePrice = parseFloat(selectedPhone.value) * parseInt(phoneQty);
+            total += phonePrice;
+            cartItems.push(`${selectedPhone.dataset.name} (${phoneQty}x): ${phonePrice.toFixed(2)} €`);
+        }
 
-    <section>
-      <h2>Warenkorb</h2>
-        <p>Gesamtpreis: <span id="total">0</span> € (zzgl. 10 € Versand)</p>
-        <p>Ausgewählte Produkte:</p>
-        <ul id="cart"></ul>
-        <p>Sende deine Bestellung an: <a href="mailto:bestellung@pixelsecure.co">pixelsecure@tuta.io</a></p>
-        <p><strong>Zahlung:</strong> Nur Monero (XMR) oder Cash per Post mit einmaligem Code (Details per E-Mail).</p>
-    </section>
+        // Umbauten hinzufügen
+        modCheckboxes.forEach(checkbox => {
+            if (checkbox.checked) {
+                total += parseFloat(checkbox.value);
+                cartItems.push(`${checkbox.dataset.name}: ${checkbox.value} €`);
+            }
+        });
 
-    <script src="script.js"></script>
-</body>
-</html>
+        // SIM-Karten hinzufügen
+        simCheckboxes.forEach((checkbox, index) => {
+            if (checkbox.checked) {
+                const simQty = simQuantities[index].value;
+                const simPrice = parseFloat(checkbox.value) * parseInt(simQty);
+                total += simPrice;
+                cartItems.push(`${checkbox.dataset.name} (${simQty}x): ${simPrice.toFixed(2)} €`);
+            }
+        });
+
+        // Versandkosten hinzufügen
+        total += 10;
+        cartItems.push(`Versand: 10.00 €`);
+
+        // Gesamtpreis und Warenkorb anzeigen
+        totalElement.textContent = total.toFixed(2);
+        cartElement.innerHTML = cartItems.map(item => `<li>${item}</li>`).join('');
+    }
+
+    // Event-Listener für Handy-Auswahl
+    phoneRadios.forEach(radio => {
+        radio.addEventListener('change', function () {
+            phoneQuantities.forEach(qty => qty.disabled = true);
+            const selectedQty = radio.closest('.phone-option').querySelector('input[name="phone-qty"]');
+            selectedQty.disabled = false;
+            updateCart();
+        });
+    });
+
+    // Event-Listener für Mengenänderungen
+    phoneQuantities.forEach(qty => {
+        qty.addEventListener('input', updateCart);
+    });
+
+    // Event-Listener für Umbauten und SIM-Karten
+    modCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', updateCart);
+    });
+
+    simCheckboxes.forEach((checkbox, index) => {
+        checkbox.addEventListener('change', function () {
+            simQuantities[index].disabled = !checkbox.checked;
+            updateCart();
+        });
+    });
+
+    simQuantities.forEach(qty => {
+        qty.addEventListener('input', updateCart);
+    });
+
+    // Initiale Aktualisierung des Warenkorbs
+    updateCart();
+});
